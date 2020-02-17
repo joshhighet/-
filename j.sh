@@ -27,8 +27,8 @@ printf "ssh key password:\n"
 runuser -l josh -c 'ssh-keygen -t rsa -b 4096 -C "autodep@joshhighet.com" -f /home/josh/.ssh/id_rsa -q'
 curl  -s -C - https://pkg.cloudflare.com/pubkey.gpg | sudo apt-key add -
 sudo echo 'deb http://pkg.cloudflare.com/ xenial main' >> /etc/apt/sources.list.d/cloudflare-main.list
-sudo apt-get -qq update -y 2>/dev/null
-sudo apt-get -qq upgrade -y 2>/dev/null
+sudo apt-get -qq update -y 2>&1
+sudo apt-get -qq upgrade -y 2>&1
 sudo apt install -y \
 jq \
 ufw \
@@ -47,9 +47,9 @@ moreutils \
 python3-pip \
 python3-virtualenv \
 unattended-upgrades \
--qq 2>/dev/null
-sudo apt -qq autoclean -y 2>/dev/null
-sudo apt -qq autoremove -y 2>/dev/null
+-qq 2>&1
+sudo apt -qq autoclean -y 2>&1
+sudo apt -qq autoremove -y 2>&1
 cat /tmp/j/alias.zshrc >> /home/josh/.bashrc
 chown -R josh:josh /home/josh
 source /home/josh/.bashrc
@@ -68,7 +68,7 @@ runuser -l josh -c 'git clone https://github.com/joshhighet/nebula --quiet'
 runuser -l josh -c 'git clone https://github.com/joshhighet/simplesftp --quiet'
 runuser -l josh -c 'touch /home/josh/.jsh'
 #####
-sudo ufw allow ssh 2>/dev/null
+sudo ufw allow ssh 2>&1
 #clear
 #tree /home/josh
 #ufw status verbose
