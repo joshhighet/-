@@ -10,17 +10,17 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 #https tunnel
-printf "primary FQDN [i.e bikinibottom.joshhighet.com] : " | lolcat --animate
+printf "primary FQDN [i.e bikinibottom.joshhighet.com] : "
 read hostname
-printf "local binding URL [i.e https://localhost:8000] : " | lolcat --animate
+printf "local binding URL [i.e https://localhost:8000] : "
 read url
-printf "tag [i.e bikinibottom=https] - enter for no tags : " | lolcat --animate
+printf "tag [i.e bikinibottom=https] - enter for no tags : "
 read tag
-logfile="/var/log/cloudflared-https.log" | lolcat --animate
+logfile="/var/log/cloudflared-https.log"
 #ssh tunnel
-printf "secondary FQDN for SSH [i.e ssh-bikinibottom.joshhighet.com] : " | lolcat --animate
+printf "secondary FQDN for SSH [i.e ssh-bikinibottom.joshhighet.com] : "
 read sshhostname
-printf "tag [i.e bikinibottom=ssh] - enter for no tags : " | lolcat --animate
+printf "tag [i.e bikinibottom=ssh] - enter for no tags : "
 read tag
 sshurl="ssh://localhost:22"
 sshlogfile="/var/log/cloudflared-ssh.log"
