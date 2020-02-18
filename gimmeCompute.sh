@@ -25,7 +25,7 @@ printf "⏰ init. custom provisioning - this will take a few mins ⏰\n\n" | lol
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -t \
 root@$shelladdr "mkdir /tmp/j && git clone https://github.com/joshhighet/j.git /tmp/j --quiet && cd /tmp/j && chmod +x j.sh && ./j.sh"
 printf "\n🏁 all done - droplet restarting - standby 🏁\n\n" | lolcat --animate --speed=15
-sleep 20
+sleep 35
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no josh@$shelladdr
 printf "\n"
 doctl compute droplet delete josh
