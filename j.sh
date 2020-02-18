@@ -25,9 +25,9 @@ runuser -l josh -c 'touch /home/josh/.ssh/authorized_keys'
 runuser -l josh -c 'curl -s -L joshhighet.com/ssh > /home/josh/.ssh/authorized_keys'
 printf "🔒 id_rsa\n"
 runuser -l josh -c 'ssh-keygen -t rsa -b 4096 -C "autodep@joshhighet.com" -f /home/josh/.ssh/id_rsa -q'
-curl  -s -C - https://pkg.cloudflare.com/pubkey.gpg | sudo apt-key add -
+#curl  -s -C - https://pkg.cloudflare.com/pubkey.gpg | sudo apt-key add -
+#sudo echo 'deb http://pkg.cloudflare.com/ xenial main' >> /etc/apt/sources.list.d/cloudflare-main.list
 printf "\n"
-sudo echo 'deb http://pkg.cloudflare.com/ xenial main' >> /etc/apt/sources.list.d/cloudflare-main.list
 sudo apt-get -qq update -y > /dev/null
 sudo apt-get -qq upgrade -y > /dev/null
 sudo apt-get install -y \
@@ -55,9 +55,9 @@ sudo hostnamectl set-hostname josh
 #sudo hostnamectl set-hostname `date +%s | shasum -a 512 | base64 | head -c 8`
 runuser -l josh -c 'echo "curl -s ipinfo.io | jq .ip,.city,.country,.org -r | cowsay | lolcat --animate --speed=150" >> /home/josh/.bashrc'
 runuser -l josh -c 'touch /home/josh/.hushlogin'
-wget --quiet -P /tmp https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-amd64.deb
-sudo dpkg -i /tmp/cloudflared-stable-linux-amd64.deb > /dev/null
-/usr/local/bin/cloudflared update
+#wget --quiet -P /tmp https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-amd64.deb
+#sudo dpkg -i /tmp/cloudflared-stable-linux-amd64.deb > /dev/null
+#/usr/local/bin/cloudflared update
 timedatectl set-timezone Pacific/Auckland
 runuser -l josh -c 'touch /home/josh/.hushlogin'
 runuser -l josh -c 'git clone https://github.com/joshhighet/j --quiet'
