@@ -1,41 +1,28 @@
 #!/usr/bin/env zsh
 #joshhighet
 #cloudflared dual-argo-tunnel setup [interactive] [debian]
-
-######
-#vars#
-######
 loglevel=warn
-
 #https tunnel
 echo "primary FQDN [i.e bikinibottom.joshhighet.com]" && read hostname
 echo "local binding URL [i.e https://localhost:8000]" && read url
 echo "tag [i.e bikinibottom=https] - enter for no tags" && read tag
 logfile="/var/log/cloudflared-https.log"
-
 #ssh tunnel
 echo "secondary FQDN for SSH [i.e ssh-bikinibottom.joshhighet.com]" && read sshhostname
 echo "tag [i.e bikinibottom=ssh] - enter for no tags" && read tag
 sshurl="ssh://localhost:22"
 sshlogfile="/var/log/cloudflared-ssh.log"
-
 ####################
 #preliminary checks#
 ####################
-
 printf "checking privs\n\n"
 if [ "$EUID" -ne 0 ]
   then echo "script needs root privs"
   exit
 fi
-
-printf "updating base packages\n\n"
-apt-get update -y && apt-get upgrade -y
-
 ########################
 #begin primary install #
 ########################
-
 printf "creating cloudflared home directory\n\n"
 [ -d "/etc/cloudflared" ] && echo "/etc/cloudflared already exists" && exit
 mkdir /etc/cloudflared
@@ -69,11 +56,9 @@ printf "authenticating argo tunnel\n\n"
 
 printf "enabling cloudflared as boot-start service\n\n"
 /usr/local/bin/cloudflared service install
-
 ######################################
 #begin secondary cloudflared install #
 ######################################
-
 printf "creating cloudflared-ssh home directory\n\n"
 [ -d "/etc/cloudflared-ssh" ] && echo "/etc/cloudflared-ssh already exists" && exit
 mkdir /etc/cloudflared-ssh
@@ -103,7 +88,6 @@ printf "checking for cloudflared-ssh updates\n\n"
 /etc/cloudflared-ssh/cloudflared update
 
 printf "configuring cloudflared-ssh systemd files\n\n"
-#a manual systemd entry for the binary is added
 
 echo "[Unit]
 Description=Argo Tunnel
@@ -139,21 +123,11 @@ ExecStart=/bin/bash -c '/etc/cloudflared-ssh/cloudflared update; code=$?; if [ $
 chmod 644 /etc/systemd/system/cloudflared-ssh.service
 chmod 644 /etc/systemd/system/cloudflared-ssh-update.timer
 chmod 644 /etc/systemd/system/cloudflared-ssh-update.service
-
 systemctl enable cloudflared-ssh.service
 systemctl enable cloudflared-ssh-update.timer
 systemctl enable cloudflared-ssh-update.service
-
 systemctl start cloudflared-ssh.service
 systemctl start cloudflared-ssh-update.timer
 systemctl start cloudflared-ssh-update.service
-
-echo "
-
-"
 systemctl status cloudflared
-
-echo "
-
-"
 systemctl status cloudflared-ssh

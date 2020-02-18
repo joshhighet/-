@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 cat << "EOF"
 
  _     _       _                _
@@ -23,7 +23,7 @@ do
      PS3='select connection type: '
      select type in "ssh" "sftp"
      do
-          echo any additional $type arguments ?
+          printf "additional $type arguments : "
           read args
           case "$type" in
                ssh ) clear && ssh $args $item ;;
