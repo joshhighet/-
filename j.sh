@@ -52,7 +52,7 @@ source /home/josh/.bashrc
 sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
 sudo hostnamectl set-hostname josh
 #sudo hostnamectl set-hostname `date +%s | shasum -a 512 | base64 | head -c 8`
-runuser -l josh -c 'echo "curl -s ipinfo.io | jq .ip,.city,.country,.org -r | cowsay | lolcat" >> /home/josh/.bashrc'
+runuser -l josh -c 'echo "curl -s ipinfo.io | jq .ip,.city,.country,.org -r | cowsay | lolcat --animate --speed=15" >> /home/josh/.bashrc'
 runuser -l josh -c 'touch /home/josh/.hushlogin'
 wget --quiet -P /tmp https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-amd64.deb
 sudo dpkg -i /tmp/cloudflared-stable-linux-amd64.deb > /dev/null
@@ -74,6 +74,6 @@ yes | sudo ufw enable > /dev/null
 #tree /home/josh
 #ufw status verbose
 #printf "`echo $HOSTNAME` restarting - reshell w/\nssh josh@` curl -s ipinfo.io/ip`\n"
-runuser -l josh -c 'echo "configured with https://github.com/joshhighet/j/blob/master/j.sh" | tee /home/josh/.jsh | lolcat'
+runuser -l josh -c 'echo "configured with https://github.com/joshhighet/j/blob/master/j.sh" | tee /home/josh/.jsh | lolcat --animate --speed=15'
 printf "\n"
 sudo reboot
