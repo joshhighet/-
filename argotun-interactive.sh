@@ -12,7 +12,7 @@ fi
 #https tunnel
 printf "primary FQDN [i.e bikinibottom.joshhighet.com] : "
 read hostname
-printf "local binding URL [i.e https://localhost:8000] : "
+printf "local binding URL [i.e http://localhost:80] : "
 read url
 printf "tag [i.e bikinibottom=https] - enter for no tags : "
 read tag
@@ -52,8 +52,6 @@ echo "pidfile: /etc/cloudflared/pid" >> /etc/cloudflared/config.yml
 printf "\n"
 /usr/local/bin/cloudflared login
 printf "\n"
-#printf "enabling cloudflared as boot-start service\n\n"
-/usr/local/bin/cloudflared service install
 ######################################
 #begin secondary cloudflared install #
 ######################################
@@ -123,3 +121,5 @@ systemctl enable cloudflared-ssh-update.timer --quiet
 systemctl start cloudflared-ssh.service --quiet
 systemctl start cloudflared-ssh-update.timer --quiet
 systemctl start cloudflared-ssh-update.service --quiet
+#printf "enabling cloudflared as boot-start service\n\n"
+/usr/local/bin/cloudflared service install
