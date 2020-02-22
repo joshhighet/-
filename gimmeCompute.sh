@@ -1,5 +1,6 @@
 #cloudbuild - quickconfig a random machine in DigitalOcean
 #joshhighet
+clear
 droplet_name=josh
 do_size=s-1vcpu-1gb
 provision_user=josh
@@ -17,11 +18,13 @@ instance_overlap=`doctl compute droplet list $droplet_name --format ID --no-head
 ssh_pubkey_fingerprint=`doctl compute ssh-key list --no-header --format FingerPrint | head -n 1`
 #########
 if [ "$instance_overlap" ]
-then printf "droplet $droplet_name already exists\nremove this droplet with : doctl compute droplet delete $instance_overlap\n"
+then printf "droplet $droplet_name already exists\nremove this droplet with : "
+printf "doctl compute droplet delete $instance_overlap\n" | lolcat
 exit 0
 fi
 if [ -z "$ssh_pubkey_fingerprint" ]
-then printf "add an ssh pubkey to DO to proceed\nadd with : doctl compute ssh-key\n"
+then printf "add an ssh pubkey to to proceed\nadd with : "
+printf "doctl compute ssh-key import ~/.ssh/id_rsa.pub\n" | lolcat
 exit 0
 fi
 #########
@@ -46,16 +49,38 @@ doctl compute droplet list $droplet_name \
 printf "\n🎀 waiting for droplet to accept inbound connections 🎀\n\n" | lolcat --animate --speed=1
 shelladdr=`doctl compute droplet list $droplet_name --format PublicIPv4 --no-header`
 #########
+if [[ "$1" == "--quick" ]]; then
+  printf "🏎️ 💨 quickmode selected- customconfig will not be applied 🏎️ 💨\n\n" | lolcat
+  ticker=0;
+  until ssh \
+  -o UserKnownHostsFile=/dev/null \
+  -o StrictHostKeyChecking=no \
+  -t root@$shelladdr || [ $ticker -eq 20 ]; \
+  do sleep 1; (( COUNT++ )); done
+  printf "\n 👋 🛑 ✋ "
+  doctl compute droplet delete $droplet_name
+  exit 0
+fi
+#########
 sleep 90
 #########
 printf "⏰ init. custom provisioning - this will take a few mins ⏰\n\n" | lolcat --animate --speed=15
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -t \
-root@$shelladdr $postboot_command
+ticker=0;
+until ssh \
+-o UserKnownHostsFile=/dev/null \
+-o StrictHostKeyChecking=no \
+-t root@$shelladdr $postboot_command|| [ $ticker -eq 20 ]; \
+do sleep 1; (( COUNT++ )); done
 printf "\n🏁 all done - droplet restarting - standby 🏁\n\n" | lolcat --animate --speed=15
 #########
 sleep 35
 #########
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $provision_user@$shelladdr
+ticker=0;
+until ssh \
+-o UserKnownHostsFile=/dev/null \
+-o StrictHostKeyChecking=no \
+-t $provision_user@$shelladdr || [ $ticker -eq 20 ]; \
+do sleep 1; (( COUNT++ )); done
 #########
-printf "\n"
+printf "\n 👋 🛑 ✋ "
 doctl compute droplet delete $droplet_name
