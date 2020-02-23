@@ -2,6 +2,9 @@
 #cloudflared dual-argo-tunnel setup [interactive] [debian]
 #joshhighet
 loglevel=warn
+serviceuser=cloudflared
+servicegroup=cloudflared-grp
+####################
 logfile=/var/log/cloudflared-https.log
 sshlogfile=/var/log/cloudflared-ssh.log
 sshurl=ssh://localhost:22
@@ -21,22 +24,11 @@ fi
 [ -d "/etc/cloudflared" ] && echo "/etc/cloudflared already exists!" && exit
 [ -d "/etc/cloudflared-ssh" ] && echo "/etc/cloudflared-ssh already exists" && exit
 #ceck if user we plan to create for isolated service exists already
-getent passwd cloudflared > /dev/null 2&>1
+getent passwd $serviceuser > /dev/null 2&>1
 if [ $? -eq 0 ]; then
-    printf "user cloudflared already exists\n"
+    printf "user $serviceuser already exists\n"
     exit 0
 fi
-#add group "cloudflared-grp" for user "cloudflared"
-addgroup cloudflared-grp \
---quiet
-#add user "cloudflared" without home directory or interactive capabilities
-adduser \
---quiet \
---gecos "" \
---disabled-login \
---disabled-password \
---ingroup cloudflared-grp \
-cloudflared
 #https tunnel variables
 printf "primary FQDN [i.e web.joshhighet.com] : " && read hostname
 printf "local binding URL [i.e http://localhost:80] : " && read url
@@ -53,6 +45,17 @@ printf "tag [i.e bikinibottom=https] - enter for no tags : " && read tag
 #ssh tunnel
 printf "secondary FQDN for SSH [i.e ssh.joshhighet.com] : " && read sshhostname
 printf "tag [i.e bikinibottom=ssh] - enter for no tags : " && read tag
+#add group "$servicegroup" for user "$serviceuser"
+addgroup $servicegroup \
+--quiet
+#add user "$serviceuser" without home directory or interactive capabilities
+adduser \
+--quiet \
+--gecos "" \
+--disabled-login \
+--disabled-password \
+--ingroup $servicegroup \
+$serviceuser
 ########################
 #begin primary install #
 ########################
@@ -72,15 +75,10 @@ sudo dpkg -i /tmp/cloudflared.deb > /dev/null
 tar -xvf /tmp/cloudflared-ssh.tgz -C /tmp \
 > /dev/null
 mv /tmp/cloudflared /usr/local/bin/cloudflared-ssh
-#creating cloudflared config file
-touch /etc/cloudflared/config.yml
-#creating cloudflared-ssh config file
-touch /etc/cloudflared-ssh/config.yml
-#creating cloudflared logfile
+#creating cloudflared logfiles & pid markers
 touch $logfile
-touch /etc/cloudflared/pid
-creating cloudflared-ssh logfile
 touch $sshlogfile
+touch /etc/cloudflared/pid
 touch /etc/cloudflared-ssh/pid
 #populating cloudflared config file
 echo "hostname: $hostname" > /etc/cloudflared/config.yml
@@ -96,7 +94,7 @@ echo "logfile: $sshlogfile" >> /etc/cloudflared-ssh/config.yml
 echo "loglevel: $loglevel" >> /etc/cloudflared/config.yml
 echo "tunnel_tag: $sshtag" >> /etc/cloudflared-ssh/config.yml
 echo "pidfile: /etc/cloudflared-ssh/pid" >> /etc/cloudflared-ssh/config.yml
-#configuring cloudflared-ssh systemd files
+#configuring cloudflared systemd files
 echo """[Unit]
 Description=Update Argo Tunnel
 
@@ -120,8 +118,8 @@ Description=Update Argo Tunnel
 After=network.target
 
 [Service]
-User=cloudflared
-Group=cloudflared-grp
+User=$serviceuser
+Group=$servicegroup
 ExecStart=/bin/bash -c '/usr/local/bin/cloudflared update; code=\$?; if [ \$code -eq 64 ]; then systemctl restart cloudflared; exit 0; fi; exit \$code'""" \
 | tee /etc/systemd/system/cloudflared-update.service /etc/systemd/system/cloudflared-ssh-update.service 1>/dev/null
 sed -i 's/cloudflared;/cloudflared-ssh/g' /etc/systemd/system/cloudflared-ssh-update.service
@@ -132,11 +130,11 @@ Description=Argo Tunnel
 After=network.target
 
 [Service]
-User=cloudflared
-Group=cloudflared-grp
+User=$serviceuser
+Group=$servicegroup
 TimeoutStartSec=0
 Type=notify
-ExecStart=/usr/local/bin/cloudflared --config /etc/cloudflared/config.yml --origincert /etc/cloudflared/cert.pem --no-autoupdate
+ExecStart=/usr/local/bin/cloudflared --config /etc/cloudflared/config.yml --origincert /home/$serviceuser/.cloudflared/cert.pem --no-autoupdate
 Restart=on-failure
 RestartSec=5s
 
@@ -149,16 +147,16 @@ ln -s /etc/systemd/system/multi-user.target.wants/cloudflared.service /etc/syste
 ln -s /etc/systemd/system/multi-user.target.wants/cloudflared-ssh.service /etc/systemd/system/cloudflared-ssh.service
 #
 chmod 644 /etc/systemd/system/cloudflared-ssh*
-chown --recursive cloudflared:cloudflared-grp /etc/cloudflared
-chown --recursive cloudflared:cloudflared-grp /etc/cloudflared-ssh
-chown --recursive cloudflared:cloudflared-grp /var/log/cloudflared*
-chown --recursive cloudflared:cloudflared-grp /etc/systemd/system/cloudflared*
-chown --recursive cloudflared:cloudflared-grp /usr/local/bin/cloudflared
+chown --recursive $serviceuser:$servicegroup /etc/cloudflared
+chown --recursive $serviceuser:$servicegroup /etc/cloudflared-ssh
+chown --recursive $serviceuser:$servicegroup /var/log/cloudflared*
+chown --recursive $serviceuser:$servicegroup /etc/systemd/system/cloudflared*
+chown --recursive $serviceuser:$servicegroup /usr/local/bin/cloudflared
 #checking for cloudflared updates
-runuser -l cloudflared -c '/usr/local/bin/cloudflared update'
-runuser -l cloudflared -c '/usr/local/bin/cloudflared-ssh update'
+runuser -l $serviceuser -c '/usr/local/bin/cloudflared update'
+runuser -l $serviceuser -c '/usr/local/bin/cloudflared-ssh update'
 #printf "authenticating argo tunnel\n\n"
-runuser -l cloudflared -c '/usr/local/bin/cloudflared login'
+runuser -l $serviceuser -c '/usr/local/bin/cloudflared login'
 #test
 exit
 #test

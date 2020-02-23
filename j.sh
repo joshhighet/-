@@ -12,6 +12,9 @@ printf "\n"
 sudo echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE !$H+H*' > /etc/motd
 adduser josh --quiet --gecos ""
 printf "\n"
+#create random password
+#password=`openssl rand -base64 12`
+#echo $password | passwd josh --stdin
 usermod -aG sudo josh
 runuser -l josh -c 'mkdir /home/josh/.ssh'
 runuser -l josh -c 'mkdir /home/josh/logs'
