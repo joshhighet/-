@@ -2,7 +2,23 @@
 #intended for use with github.com/joshhighet/j/argotunnel.sh
 #joshhighet
 canaryextip=127.0.0.1
-#
+####################################################################################
+#serviceuser=canary
+##check if user we plan to create for isolated service exists already
+#getent passwd $serviceuser > /dev/null 2&>1
+#if [ $? -eq 0 ]; then
+#    printf "user $serviceuser already exists\n"
+#    exit 0
+#fi
+#add user "$serviceuser" without home directory or interactive capabilities into docker group (allow docker-compose without sudo)
+#adduser \
+#--quiet \
+#--gecos "" \
+#--disabled-login \
+#--disabled-password \
+#--ingroup docker \
+#$serviceuser
+####################################################################################
 printf "primary FQDN [i.e canary.joshhighet.com] : " && read canarydomain
 sudo apt-get install -y \
 python-pip \
@@ -34,7 +50,7 @@ sudo echo "vm.overcommit_memory = 1" | tee /etc/sysctl.conf 1>/dev/null
 sudo sysctl vm.overcommit_memory=1 1>/dev/null
 sudo update-grub &> /dev/null
 echo """[Unit]
-Description=Docker Compose Application Service
+Description=Docker Compose CanaryTokens
 Requires=docker.service
 After=docker.service
 
@@ -51,3 +67,4 @@ WantedBy=multi-user.target""" \
 | sudo tee /etc/systemd/system/canarytokens.service 1>/dev/null
 sudo systemctl start canarytokens --quiet
 sudo systemctl enable canarytokens --quiet
+service canarytokens status
