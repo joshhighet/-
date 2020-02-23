@@ -154,16 +154,18 @@ chown --recursive cloudflared:cloudflared-grp /etc/cloudflared-ssh
 chown --recursive cloudflared:cloudflared-grp /var/log/cloudflared*
 chown --recursive cloudflared:cloudflared-grp /etc/systemd/system/cloudflared*
 chown --recursive cloudflared:cloudflared-grp /usr/local/bin/cloudflared
-#printf "checking for cloudflared updates\n\n"
+#checking for cloudflared updates
 runuser -l cloudflared -c '/usr/local/bin/cloudflared update'
-#printf "checking for cloudflared-ssh updates\n\n"
 runuser -l cloudflared -c '/usr/local/bin/cloudflared-ssh update'
 #printf "authenticating argo tunnel\n\n"
 runuser -l cloudflared -c '/usr/local/bin/cloudflared login'
+#test
+exit
+#test
 systemctl enable cloudflared-ssh.service --quiet
 systemctl enable cloudflared-ssh-update.timer --quiet
 systemctl start cloudflared-ssh.service --quiet
 systemctl start cloudflared-ssh-update.timer --quiet
 systemctl start cloudflared-ssh-update.service --quiet
 #printf "enabling cloudflared as boot-start service\n\n"
-runuser -l cloudflared -c '/usr/local/bin/cloudflared service install'
+#runuser -l cloudflared -c '/usr/local/bin/cloudflared service install'
