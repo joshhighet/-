@@ -14,6 +14,7 @@ adduser josh --quiet --gecos ""
 printf "\n"
 usermod -aG sudo josh
 runuser -l josh -c 'mkdir /home/josh/.ssh'
+runuser -l josh -c 'mkdir /home/josh/logs'
 runuser -l josh -c 'touch /home/josh/.ssh/authorized_keys'
 ######################################
 #########WAF-BYPASS-CONDITION#########
@@ -71,6 +72,19 @@ sudo ufw default deny incoming > /dev/null
 sudo ufw default allow outgoing > /dev/null
 sudo ufw allow from $originaddr to any port 22 proto tcp > /dev/null
 yes | sudo ufw enable > /dev/null
+###actionban###
+#curl -s -o /dev/null \
+#-X POST -H 'X-Auth-Email: <cfuser>' \
+#-H 'X-Auth-Key: <cftoken>' \
+#-H 'Content-Type: application/json' -d '{ "mode": "block", "configuration": { "target": "ip", "value": "<ip>" } }' \
+#https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules
+###actionunban###
+#curl -s -o /dev/null \
+#-X DELETE -H 'X-Auth-Email: <cfuser>' \
+#-H 'X-Auth-Key: <cftoken>' \
+#https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules/$(curl -s -X GET -H 'X-Auth-Email: <cfuser>' -H 'X-Auth-Key: <cftoken>' \
+#'https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules?mode=block&configuration_target=ip&configuration_value=<ip>&page=1&per_page=1' \
+#| cut -d'"' -f6)
 #clear
 #tree /home/josh
 #ufw status verbose

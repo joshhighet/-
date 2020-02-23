@@ -17,10 +17,10 @@ if [[ $(curl -s -I https://dash.cloudflare.com | head -n 1) = *401 ]]; then
   printf "unable to reach cloudflare to continue setup\n"
   exit
 fi
-#
+#check if folder structure pre-existing as some changes below will make resursive changes
 [ -d "/etc/cloudflared" ] && echo "/etc/cloudflared already exists!" && exit
 [ -d "/etc/cloudflared-ssh" ] && echo "/etc/cloudflared-ssh already exists" && exit
-#
+#ceck if user we plan to create for isolated service exists already
 getent passwd cloudflared > /dev/null 2&>1
 if [ $? -eq 0 ]; then
     printf "user cloudflared already exists\n"
@@ -30,14 +30,14 @@ fi
 addgroup cloudflared-grp \
 --quiet
 #add user "cloudflared" without home directory or interactive capabilities
-#--disabled-login \
-#--disabled-password \
 adduser \
 --quiet \
 --gecos "" \
+--disabled-login \
+--disabled-password \
 --ingroup cloudflared-grp \
 cloudflared
-#https tunnel
+#https tunnel variables
 printf "primary FQDN [i.e web.joshhighet.com] : " && read hostname
 printf "local binding URL [i.e http://localhost:80] : " && read url
 url_validity=`curl -s -I --insecure $url`
@@ -56,83 +56,97 @@ printf "tag [i.e bikinibottom=ssh] - enter for no tags : " && read tag
 ########################
 #begin primary install #
 ########################
-#printf "creating cloudflared home directory\n\n"
+#creating cloudflared home directory
 mkdir /etc/cloudflared
-#printf "creating cloudflared-ssh home directory\n\n"
+#creating cloudflared-ssh home directory
 mkdir /etc/cloudflared-ssh
-#printf "downloading cloudflared\n\n"
+#downloading cloudflared
 wget --quiet https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-amd64.deb \
 -O /tmp/cloudflared.deb
-#printf "downloading cloudflared-ssh\n\n"
+#downloading cloudflared-ssh
 wget --quiet https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-amd64.tgz \
--O /etc/cloudflared-ssh/cloudflared.tgz
-#printf "installing cloudflared\n\n"
+-O /tmp/cloudflared-ssh.tgz
+#installing cloudflared
 sudo dpkg -i /tmp/cloudflared.deb > /dev/null
-rm /tmp/cloudflared.deb
-#printf "unpacking cloudflared-ssh tarball\n\n"
-tar -xvf /etc/cloudflared-ssh/cloudflared.tgz -C /etc/cloudflared-ssh \
+#unpacking cloudflared-ssh tarball
+tar -xvf /tmp/cloudflared-ssh.tgz -C /tmp \
 > /dev/null
-rm /etc/cloudflared-ssh/cloudflared.tgz
-#printf "creating cloudflared config file\n\n"
+mv /tmp/cloudflared /usr/local/bin/cloudflared-ssh
+#creating cloudflared config file
 touch /etc/cloudflared/config.yml
-#printf "creating cloudflared-ssh config file\n\n"
+#creating cloudflared-ssh config file
 touch /etc/cloudflared-ssh/config.yml
-#printf "creating cloudflared logfile\n\n"
+#creating cloudflared logfile
 touch $logfile
 touch /etc/cloudflared/pid
-#printf "creating cloudflared-ssh logfile\n\n"
+creating cloudflared-ssh logfile
 touch $sshlogfile
 touch /etc/cloudflared-ssh/pid
-#printf "populating cloudflared config file\n\n"
+#populating cloudflared config file
 echo "hostname: $hostname" > /etc/cloudflared/config.yml
 echo "url: $url" >> /etc/cloudflared/config.yml
 echo "loglevel: $loglevel" >> /etc/cloudflared/config.yml
 echo "logfile: $logfile" >> /etc/cloudflared/config.yml
 echo "tunnel_tag: $tag" >> /etc/cloudflared/config.yml
 echo "pidfile: /etc/cloudflared/pid" >> /etc/cloudflared/config.yml
-#printf "populating cloudflared-ssh config file\n\n"
+#populating cloudflared-ssh config file
 echo "hostname: $sshhostname" > /etc/cloudflared-ssh/config.yml
 echo "url: $sshurl" >> /etc/cloudflared-ssh/config.yml
 echo "logfile: $sshlogfile" >> /etc/cloudflared-ssh/config.yml
 echo "loglevel: $loglevel" >> /etc/cloudflared/config.yml
 echo "tunnel_tag: $sshtag" >> /etc/cloudflared-ssh/config.yml
 echo "pidfile: /etc/cloudflared-ssh/pid" >> /etc/cloudflared-ssh/config.yml
-#printf "configuring cloudflared-ssh systemd files\n\n"
+#configuring cloudflared-ssh systemd files
+echo """[Unit]
+Description=Update Argo Tunnel
+
+[Timer]
+OnCalendar=daily
+
+[Install]
+WantedBy=timers.target""" \
+| tee /etc/systemd/system/cloudflared-update.timer /etc/systemd/system/cloudflared-ssh-update.timer 1>/dev/null
+echo """[Unit]
+Description=Update Argo Tunnel
+
+[Timer]
+OnCalendar=daily
+
+[Install]
+WantedBy=timers.target
+/etc/systemd/system/cloudflared-update.service
+[Unit]
+Description=Update Argo Tunnel
+After=network.target
+
+[Service]
+User=cloudflared
+Group=cloudflared-grp
+ExecStart=/bin/bash -c '/usr/local/bin/cloudflared update; code=\$?; if [ \$code -eq 64 ]; then systemctl restart cloudflared; exit 0; fi; exit \$code'""" \
+| tee /etc/systemd/system/cloudflared-update.service /etc/systemd/system/cloudflared-ssh-update.service 1>/dev/null
+sed -i 's/cloudflared;/cloudflared-ssh/g' /etc/systemd/system/cloudflared-ssh-update.service
+sed -i 's/cloudflared-update/cloudflared-ssh-update/g' /etc/systemd/system/cloudflared-ssh-update.service
+sed -i 's/\/usr\/local\/bin\/cloudflared/\/usr\/local\/bin\/cloudflared-ssh/g' /etc/systemd/system/cloudflared-ssh-update.service
 echo """[Unit]
 Description=Argo Tunnel
 After=network.target
 
 [Service]
+User=cloudflared
+Group=cloudflared-grp
 TimeoutStartSec=0
 Type=notify
-ExecStart=/etc/cloudflared-ssh/cloudflared --config /etc/cloudflared-ssh/config.yml --origincert /home/cloudflared/.cloudflared/cert.pem --no-autoupdate
+ExecStart=/usr/local/bin/cloudflared --config /etc/cloudflared/config.yml --origincert /etc/cloudflared/cert.pem --no-autoupdate
 Restart=on-failure
 RestartSec=5s
 
 [Install]
-WantedBy=multi-user.target""" > /etc/systemd/system/cloudflared-ssh.service
-echo """[Unit]
-Description=Update Argo Tunnel
-
-[Timer]
-OnUnitActiveSec=1d
-
-[Install]
-WantedBy=timers.target""" > /etc/systemd/system/cloudflared-ssh-update.timer
-echo """[Unit]
-Description=Update Argo Tunnel
-After=network.target
-
-[Service]
-ExecStart=/bin/bash -c '/etc/cloudflared-ssh/cloudflared update; code=$?; if [ $code -eq 64 ]; then systemctl restart cloudflared-ssh; exit 0; fi; exit $code""" \
-> /etc/systemd/system/cloudflared-ssh-update.service
-echo """[Unit]
-Description=Update Argo Tunnel
-After=network.target
-
-[Service]
-ExecStart=/bin/bash -c '/etc/cloudflared-ssh/cloudflared update; code=$?; if [ $code -eq 64 ]; then systemctl restart cloudflared-ssh; exit 0; fi; exit $code'""" \
-> /etc/systemd/system/cloudflared-ssh-update.service
+WantedBy=multi-user.target""" \
+| tee /etc/systemd/system/multi-user.target.wants/cloudflared.service /etc/systemd/system/multi-user.target.wants/cloudflared-ssh.service 1>/dev/null
+sed -i 's/\/usr\/local\/bin\/cloudflared/\/usr\/local\/bin\/cloudflared-ssh/g' /etc/systemd/system/multi-user.target.wants/cloudflared-ssh.service
+sed -i 's/cloudflared\/config/cloudflared-ssh\/config/g' /etc/systemd/system/multi-user.target.wants/cloudflared-ssh.service
+ln -s /etc/systemd/system/multi-user.target.wants/cloudflared.service /etc/systemd/system/cloudflared.service
+ln -s /etc/systemd/system/multi-user.target.wants/cloudflared-ssh.service /etc/systemd/system/cloudflared-ssh.service
 #
 chmod 644 /etc/systemd/system/cloudflared-ssh*
 chown --recursive cloudflared:cloudflared-grp /etc/cloudflared
@@ -143,7 +157,7 @@ chown --recursive cloudflared:cloudflared-grp /usr/local/bin/cloudflared
 #printf "checking for cloudflared updates\n\n"
 runuser -l cloudflared -c '/usr/local/bin/cloudflared update'
 #printf "checking for cloudflared-ssh updates\n\n"
-runuser -l cloudflared -c '/etc/cloudflared-ssh/cloudflared update'
+runuser -l cloudflared -c '/usr/local/bin/cloudflared-ssh update'
 #printf "authenticating argo tunnel\n\n"
 runuser -l cloudflared -c '/usr/local/bin/cloudflared login'
 systemctl enable cloudflared-ssh.service --quiet
