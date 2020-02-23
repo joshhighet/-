@@ -8,8 +8,9 @@ sudo apt-get install -y \
 python-pip \
 python-dev \
 libyaml-dev \
-docker-compose
-git clone https://github.com/thinkst/canarytokens-docker
+docker-compose \
+-qq > /dev/null
+git clone https://github.com/thinkst/canarytokens-docker --quiet
 cd canarytokens-docker
 canarydir=`pwd`
 mv switchboard.env.dist switchboard.env
@@ -27,11 +28,11 @@ sed -i 's/53:53/5300:5300/g' docker-compose.yml
 #hugepages
 sudo bash -c "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
 sed -r 's/GRUB_CMDLINE_LINUX_DEFAULT="[a-zA-Z0-9_= ]*/& transparent_hugepage=never/' /etc/default/grub \
-| sudo tee /etc/default/grub
+| sudo tee /etc/default/grub 1>/dev/null
 #overcommit_mem
-sudo echo "vm.overcommit_memory = 1" | tee /etc/sysctl.conf
-sudo sysctl vm.overcommit_memory=1
-sudo update-grub
+sudo echo "vm.overcommit_memory = 1" | tee /etc/sysctl.conf 1>/dev/null
+sudo sysctl vm.overcommit_memory=1 1>/dev/null
+sudo update-grub &> /dev/null
 echo """[Unit]
 Description=Docker Compose Application Service
 Requires=docker.service
@@ -47,6 +48,6 @@ TimeoutStartSec=0
 
 [Install]
 WantedBy=multi-user.target""" \
-> /etc/systemd/system/canarytokens.service 1>/dev/null
-systemctl start canarytokens --quiet
-systemctl enable canarytokens --quiet
+| sudo tee /etc/systemd/system/canarytokens.service 1>/dev/null
+sudo systemctl start canarytokens --quiet
+sudo systemctl enable canarytokens --quiet
