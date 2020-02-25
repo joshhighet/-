@@ -46,7 +46,7 @@ sudo bash -c "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
 sed -r 's/GRUB_CMDLINE_LINUX_DEFAULT="[a-zA-Z0-9_= ]*/& transparent_hugepage=never/' /etc/default/grub \
 | sudo tee /etc/default/grub 1>/dev/null
 #overcommit_mem
-sudo echo "vm.overcommit_memory = 1" | tee /etc/sysctl.conf 1>/dev/null
+echo "vm.overcommit_memory = 1" | sudo tee /etc/sysctl.conf 1>/dev/null
 sudo sysctl vm.overcommit_memory=1 1>/dev/null
 sudo update-grub &> /dev/null
 echo """[Unit]
