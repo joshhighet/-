@@ -14,8 +14,10 @@ alias cloudflaredssh='cloudflared access ssh-config --hostname'
 alias tor='/Applications/Tor Browser.app/Contents/MacOS/firefox'
 alias firefox='/Applications/Firefox.app/Contents/MacOS/firefox'
 alias checkra1n='/Applications/checkra1n.app/Contents/MacOS/checkra1n'
+alias privs='/Applications/Privileges.app/Contents/Resources/PrivilegesCLI'
 alias google='{read -r arr; open "https://google.com/search?q=${arr}";} <<<'
 alias chrome='/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome'
+alias freewilly='docker rm $(docker ps -a -q) && docker stop $(docker ps -a -q)'
 #networking
 alias myip-json="curl -s ipinfo.io | jq"
 alias ports="sudo lsof -iTCP -sTCP:LISTEN -n -P"
