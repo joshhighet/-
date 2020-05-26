@@ -28,5 +28,5 @@ def main():
 	subdomains = sorted(set(subdomains))
 
 	for subdomain in subdomains:
-		print("[-]  {s}".format(s=subdomain))
+		print("{s}".format(s=subdomain))
 main()
