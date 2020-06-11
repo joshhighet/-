@@ -1,8 +1,10 @@
 ################################################################################
+# curl -L raw.githubusercontent.com/joshhighet/j/master/accessPlease.sh | bash #
+################################################################################
 USER=josh
 EXTIP=`curl -s ipinfo.io/ip`
 SSHKEYLOC=cdn.joshhighet.com/ssh
-PASS=`date +%s | shasum -a 512 | base64 | head -c 15 ; echo`
+PASS=`openssl rand -base64 16`
 ################################################################################
 adduser $USER --gecos \
 "First Last,RoomNumber,WorkPhone,HomePhone" \
