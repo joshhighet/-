@@ -25,6 +25,7 @@ alias ip='{read -r arr; curl "ip-api.com/${arr}";} <<<'
 alias intip="ifconfig | grep 'inet ' | grep -v 127.0.0.1 | cut -d\  -f2"
 alias ipgrepv6="grep -o '^\([0-9a-fA-F]\{0,4\}:\)\{1,7\}[0-9a-fA-F]\{0,4\}$'"
 alias ipgrepv4="grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'"
+whatport='{read -r arr; curl -s "https://isc.sans.edu/api/port/${arr}?json" | jq .services;} <<<'
 alias myip='curl -s ipinfo.io | jq .ip,.city,.country,.org -r | cowsay | lolcat --animate --speed=150'
 alias ipgrep="grep -o -e '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' -e '^\([0-9a-fA-F]\{0,4\}:\)\{1,7\}[0-9a-fA-F]\{0,4\}$'"
 #whois -h whois.radb.net -- '-i origin 12345' | grep -Eo "([0-9.]+){4}/[0-9]+" | sort -n | uniq -c | cut -d ' ' -f5
